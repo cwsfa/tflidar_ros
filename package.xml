@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>tflidar_ros</name>
+  <version>0.0.0</version>
+  <description>The tflidar_ros package</description>
+  <maintainer email="hyunin@todo.todo">hyunin</maintainer>
+
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>sensor_msgs</depend>
+  <depend>roscpp</depend>
+  <exec_depend>boost</exec_depend>
+
+
+  <export>
+  </export>
+</package>
