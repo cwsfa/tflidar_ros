@@ -1,60 +1,92 @@
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <string>
+
 #include <TFlidar.h>
+#include <TFlidar_ros.h>
+#include "std_msgs/msg/string.hpp"
 
-int main(int argc, char **argv){
-  ros::init(argc, argv, "tflidar_ros_node");
-  ros::NodeHandle nh("~");
-  std::string id = "TFlidar"; // TF Frame id
-  std::string topic_name = "range"; // ROS Topic name
-  std::string portName;
-  std::string model;
-  int baud_rate;
-  benewake::TFlidar *tflidar_obj;
+using namespace std::chrono_literals;
 
-  nh.param("serial_port", portName, std::string("/dev/ttyUSB0"));
-  nh.param("baud_rate", baud_rate, 115200);
-  nh.param("model", model, std::string("TF03"));
 
-  // init TFlidar variable & ros publisher
-  tflidar_obj = new benewake::TFlidar(portName, baud_rate); // create TFlidar object
-  ros::Publisher pub_range = nh.advertise<sensor_msgs::Range>(topic_name, 1000, true);
+TfMiniTest::TfMiniTest()
+: Node("tflidar_ros_node")
+{
+  RCLCPP_INFO(this->get_logger(), "TF03 Node Started!!!");
 
-  // sensor msgs init
-  sensor_msgs::Range TFlidar_range;
-  TFlidar_range.radiation_type = sensor_msgs::Range::INFRARED;
-  if(model == std::string("TFmini")) {
-    ROS_INFO_STREAM("Set For  TFmini...");
+  // param
+  std::string id{"TFlidar"};
+  this->declare_parameter("portName", std::string("/dev/ttyUSB0"));
+  this->declare_parameter("baudRate", 115200);
+  this->declare_parameter("model", std::string("TF03"));
+  this->declare_parameter("topic_name", std::string("range_feedback"));
+  std::string portName_ = this->get_parameter("portName").get_value<std::string>();
+  int baudRate_ = this->get_parameter("baudRate").get_value<int>();
+  std::string model_ = this->get_parameter("model").get_value<std::string>();
+  std::string topic_name_ = this->get_parameter("topic_name").get_value<std::string>();
+
+  // DRIVER OBJECT
+  benewake::TFlidar tflidar_obj(portName_, baudRate_);
+
+  // PUBLISHER
+  const auto qos_profile =
+    rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile();
+  range_publisher_ = this->create_publisher<sensor_msgs::msg::Range>(
+    topic_name_,
+    qos_profile);
+
+  // range msg
+  sensor_msgs::msg::Range TFlidar_range;
+  TFlidar_range.radiation_type = sensor_msgs::msg::Range::INFRARED;
+  if(model_ == std::string("TFmini")) {
+    RCLCPP_INFO(this->get_logger(), "Set For  TFmini...");
     TFlidar_range.field_of_view = 0.04;
     TFlidar_range.min_range = 0.3;
     TFlidar_range.max_range = 12;
   } else {
-    ROS_INFO_STREAM("Set For TF03...");
+    RCLCPP_INFO(this->get_logger(), "Set For  TF03...");
     TFlidar_range.field_of_view = 0.00872665;
     TFlidar_range.min_range = 0.1;
     TFlidar_range.max_range = 30;
   }
 
   TFlidar_range.header.frame_id = id;
-  float dist = 0;
+  float dist{0.0};
 
-  ROS_INFO_STREAM("Start processing TFlidar...");
+  RCLCPP_INFO(this->get_logger(), "Start processing TFlidar...");
 
-  while(ros::master::check() && ros::ok()){
-    ros::spinOnce();
-    dist = tflidar_obj->getDist();
-    if(dist > 0 && dist < TFlidar_range.max_range) {
+  while(rclcpp::ok()) {
+    dist = tflidar_obj.getDist();
+    if (dist > 0.0 && dist < TFlidar_range.max_range) {
       TFlidar_range.range = dist;
     }
-    else if(dist == 0.0) {
+    else if (dist == 0.0) {
       TFlidar_range.range = TFlidar_range.max_range;
     }
-    TFlidar_range.header.stamp = ros::Time::now();
-    pub_range.publish(TFlidar_range); // publish data
+    TFlidar_range.header.stamp = rclcpp::Clock().now(); // TODO: check
+    range_publisher_->publish(TFlidar_range); // publish data
 
     if(dist == -1.0) {
-      ROS_ERROR_STREAM("Failed to read data. TFlidar node stopped!");
+      RCLCPP_INFO(this->get_logger(), "Failed to read data. TFlidar node stopped!");
       break;
     }
   }
+  // close port
+  tflidar_obj.closePort();
+};
 
-  tflidar_obj->closePort();
+TfMiniTest::~TfMiniTest()
+{
+  RCLCPP_INFO(this->get_logger(), "Destroying");
+}
+
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  TfMiniTest tftest;
+  auto node = std::make_shared<TfMiniTest>();
+  rclcpp:spin(node);
+  rclcpp::shutdown();
+  return 0;
 }

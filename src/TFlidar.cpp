@@ -1,7 +1,7 @@
 #include <TFlidar.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-//#define DEBUG
+#define DEBUG 0
 
 namespace benewake{
     TFlidar::TFlidar(std::string _name, int _baudRate) : // init TFlidar device
@@ -9,13 +9,13 @@ namespace benewake{
     {
       serial_ = open(_name.c_str(), O_RDWR);
       if(serial_ == -1){
-        ROS_ERROR_STREAM("Failed to open serial port!");
+        printf("Failed to open serial port!\n");
         exit(0);
       }
 
       struct termios options;
       if(tcgetattr(serial_, &options) != 0){
-        ROS_ERROR_STREAM("Can't get serial port sets!");
+        printf("Can't get serial port sets!\n");
         exit(0);
       }
       tcflush(serial_, TCIFLUSH);
@@ -66,7 +66,7 @@ namespace benewake{
           cfsetospeed(&options, B4800);
           break;
         default:
-          ROS_ERROR_STREAM("Unsupported baud rate!");
+          printf("Unsupported baud rate!\n");
           exit(0);
       }
 
@@ -77,7 +77,7 @@ namespace benewake{
       options.c_oflag &= ~(ONLCR | OCRNL);
 
       if(tcsetattr(serial_, TCSANOW, &options) != 0){
-        ROS_ERROR_STREAM("Can't set serial port options!");
+        printf("Can't set serial port options!\n");
         exit(0);
       }
     }

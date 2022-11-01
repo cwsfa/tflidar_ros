@@ -1,4 +1,3 @@
-#include <ros/ros.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,7 +7,6 @@
 #include <termios.h>
 #include <errno.h>
 #include <string>
-#include <sensor_msgs/Range.h>
 
 namespace benewake
 {
@@ -24,6 +22,7 @@ namespace benewake
 
     private:
       std::string portName_;
+      std::string model_;
       int baudRate_;
       int serial_;
 

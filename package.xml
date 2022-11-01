@@ -1,19 +1,22 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>tflidar_ros</name>
   <version>0.0.0</version>
   <description>The TFlidar (TFmini, TF03) ROS driver package</description>
   <author email="dev_shin@cwsfa.co.kr">Shin</author>
   <maintainer email="dev_shin@cwsfa.co.kr">Shin</maintainer>
+  <maintainer email="batbold@cwsfa.co.kr">Batbold N.</maintainer>
 
   <license>BSD</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>sensor_msgs</depend>
-  <depend>roscpp</depend>
-  <exec_depend>boost</exec_depend>
-
+  <depend>rclcpp</depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
