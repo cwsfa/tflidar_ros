@@ -48,7 +48,7 @@ TfMiniTest::TfMiniTest()
     RCLCPP_INFO(this->get_logger(), "Set For  TF03...");
     TFlidar_range.field_of_view = 0.00872665;
     TFlidar_range.min_range = 0.1;
-    TFlidar_range.max_range = 30;
+    TFlidar_range.max_range = 100;
   }
 
   TFlidar_range.header.frame_id = id;
@@ -62,9 +62,10 @@ TfMiniTest::TfMiniTest()
       TFlidar_range.range = dist;
     }
     else if (dist == 0.0) {
-      TFlidar_range.range = TFlidar_range.max_range;
+      continue;
     }
-    TFlidar_range.header.stamp = rclcpp::Clock().now(); // TODO: check
+
+    TFlidar_range.header.stamp = rclcpp::Clock().now();
     range_publisher_->publish(TFlidar_range); // publish data
 
     if(dist == -1.0) {
