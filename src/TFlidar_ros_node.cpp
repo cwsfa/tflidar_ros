@@ -64,7 +64,7 @@ TFlidar::TFlidar()
   double distance{0.0}; // initializing distance to 0.0
   RCLCPP_INFO(this->get_logger(), "Start processing TFlidar...");
   while(rclcpp::ok()) {
-    // distance = tflidar_obj.getDist();
+    distance = tflidar_obj.getDist();
     if (distance > 0.0 && distance < TFlidar_range.max_range) {
       TFlidar_range.range = distance;
     }
