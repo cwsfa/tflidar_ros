@@ -8,10 +8,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/range.hpp"
 
-class TfMiniTest: public rclcpp::Node {
+class TFlidar: public rclcpp::Node {
 public:
-  TfMiniTest();
-  ~TfMiniTest() override;
+  TFlidar();
+  ~TFlidar() override;
 
 private:
   std::string portName_;

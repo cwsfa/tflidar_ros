@@ -10,36 +10,45 @@
 using namespace std::chrono_literals;
 
 
-TfMiniTest::TfMiniTest()
+TFlidar::TFlidar()
 : Node("tflidar_ros_node")
 {
-  RCLCPP_INFO(this->get_logger(), "TF03 Node Started!!!");
+  RCLCPP_INFO(this->get_logger(), "TFlidar ROS Node Started!!!");
 
-  // param
-  std::string id{"TFlidar"};
-  this->declare_parameter("portName", std::string("/dev/ttyUSB0"));
-  this->declare_parameter("baudRate", 115200);
-  this->declare_parameter("model", std::string("TF03"));
-  this->declare_parameter("topic_name", std::string("range_feedback"));
-  std::string portName_ = this->get_parameter("portName").get_value<std::string>();
-  int baudRate_ = this->get_parameter("baudRate").get_value<int>();
-  std::string model_ = this->get_parameter("model").get_value<std::string>();
-  std::string topic_name_ = this->get_parameter("topic_name").get_value<std::string>();
+  // declare parameters
+  this->declare_parameter("model", "TF03");
+  this->declare_parameter("serial_port", "/dev/ttyUSB0");
+  this->declare_parameter("baud_rate", 115200);
+  this->declare_parameter("topic_name", "range_feedback");
+  this->declare_parameter("frame_link", "TFlidar");
+
+  std::string modelName = this->get_parameter("model").get_value<std::string>();
+  std::string portName = this->get_parameter("serial_port").get_value<std::string>();
+  int baudRate = this->get_parameter("baud_rate").get_value<int>();
+  std::string topicName = this->get_parameter("topic_name").get_value<std::string>();
+  std::string frameId = this->get_parameter("frame_link").get_value<std::string>();
+
+  RCLCPP_INFO(this->get_logger(),"Device model: %s", modelName.c_str());
+  RCLCPP_INFO(this->get_logger(),"Serial port: %s", portName.c_str());
+  RCLCPP_INFO(this->get_logger(),"Baud rate: %d", baudRate);
+  RCLCPP_INFO(this->get_logger(),"Published topic: %s", topicName.c_str());
+  RCLCPP_INFO(this->get_logger(),"Published frame id: %s", frameId.c_str());
 
   // DRIVER OBJECT
-  benewake::TFlidar tflidar_obj(portName_, baudRate_);
+  benewake::TFlidar tflidar_obj(portName, baudRate);
 
   // PUBLISHER
   const auto qos_profile =
     rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile();
   range_publisher_ = this->create_publisher<sensor_msgs::msg::Range>(
-    topic_name_,
+    topicName,
     qos_profile);
 
   // range msg
   sensor_msgs::msg::Range TFlidar_range;
+  TFlidar_range.header.frame_id = frameId;
   TFlidar_range.radiation_type = sensor_msgs::msg::Range::INFRARED;
-  if(model_ == std::string("TFmini")) {
+  if(modelName == std::string("TFmini")) {
     RCLCPP_INFO(this->get_logger(), "Set For  TFmini...");
     TFlidar_range.field_of_view = 0.04;
     TFlidar_range.min_range = 0.3;
@@ -51,25 +60,23 @@ TfMiniTest::TfMiniTest()
     TFlidar_range.max_range = 100;
   }
 
-  TFlidar_range.header.frame_id = id;
-  float dist{0.0};
-
+  // main process
+  double distance{0.0}; // initializing distance to 0.0
   RCLCPP_INFO(this->get_logger(), "Start processing TFlidar...");
-
   while(rclcpp::ok()) {
-    dist = tflidar_obj.getDist();
-    if (dist > 0.0 && dist < TFlidar_range.max_range) {
-      TFlidar_range.range = dist;
+    // distance = tflidar_obj.getDist();
+    if (distance > 0.0 && distance < TFlidar_range.max_range) {
+      TFlidar_range.range = distance;
     }
-    else if (dist == 0.0) {
+    else if (distance == 0.0) {
       continue;
     }
 
     TFlidar_range.header.stamp = rclcpp::Clock().now();
     range_publisher_->publish(TFlidar_range); // publish data
 
-    if(dist == -1.0) {
-      RCLCPP_INFO(this->get_logger(), "Failed to read data. TFlidar node stopped!");
+    if(distance == -1.0) {
+      RCLCPP_WARN(this->get_logger(), "Failed to read data. TFlidar node stopped!");
       break;
     }
   }
@@ -77,16 +84,15 @@ TfMiniTest::TfMiniTest()
   tflidar_obj.closePort();
 };
 
-TfMiniTest::~TfMiniTest()
+TFlidar::~TFlidar()
 {
-  RCLCPP_INFO(this->get_logger(), "Destroying");
+  RCLCPP_WARN(this->get_logger(), "Destroying");
 }
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  TfMiniTest tftest;
-  auto node = std::make_shared<TfMiniTest>();
+  auto node = std::make_shared<TFlidar>();
   rclcpp:spin(node);
   rclcpp::shutdown();
   return 0;
