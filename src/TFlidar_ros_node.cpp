@@ -35,7 +35,7 @@ TFlidar::TFlidar()
   RCLCPP_INFO(this->get_logger(),"Published frame id: %s", frameId.c_str());
 
   // DRIVER OBJECT
-  benewake::TFlidar tflidar_obj(portName, baudRate);
+  tflidar_obj = new benewake::TFlidar(portName, baudRate); // create TFlidar object
 
   // PUBLISHER
   const auto qos_profile =
@@ -71,7 +71,7 @@ TFlidar::TFlidar()
 
 void TFlidar::timerCallback()
 {
-  distance = tflidar_obj.getDist();
+  distance = tflidar_obj->getDist();
   if (distance > 0.0 && distance < TFlidar_range.max_range) {
     TFlidar_range.range = distance;
   }
