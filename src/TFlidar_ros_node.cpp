@@ -45,7 +45,6 @@ TFlidar::TFlidar()
     qos_profile);
 
   // range msg
-  sensor_msgs::msg::Range TFlidar_range;
   TFlidar_range.header.frame_id = frameId;
   TFlidar_range.radiation_type = sensor_msgs::msg::Range::INFRARED;
   if(modelName == std::string("TFmini")) {
@@ -61,28 +60,30 @@ TFlidar::TFlidar()
   }
 
   // main process
-  double distance{0.0}; // initializing distance to 0.0
+
   RCLCPP_INFO(this->get_logger(), "Start processing TFlidar...");
-  while(rclcpp::ok()) {
-    distance = tflidar_obj.getDist();
-    if (distance > 0.0 && distance < TFlidar_range.max_range) {
-      TFlidar_range.range = distance;
-    }
-    else if (distance == 0.0) {
-      continue;
-    }
 
-    TFlidar_range.header.stamp = rclcpp::Clock().now();
-    range_publisher_->publish(TFlidar_range); // publish data
-
-    if(distance == -1.0) {
-      RCLCPP_WARN(this->get_logger(), "Failed to read data. TFlidar node stopped!");
-      break;
-    }
-  }
-  // close port
-  tflidar_obj.closePort();
+  timer_ = this->create_wall_timer(
+    50ms, // 20 Hz
+    std::bind(&TFlidar::timerCallback, this)
+  );
 };
+
+void TFlidar::timerCallback()
+{
+  distance = tflidar_obj.getDist();
+  if (distance > 0.0 && distance < TFlidar_range.max_range) {
+    TFlidar_range.range = distance;
+  }
+  else if (distance == 0.0) {
+    // continue;
+  }
+  TFlidar_range.header.stamp = rclcpp::Clock().now();
+  range_publisher_->publish(TFlidar_range); // publish data
+  if(distance == -1.0) {
+    RCLCPP_WARN(this->get_logger(), "Failed to read data. TFlidar node stopped!");
+  }
+}
 
 TFlidar::~TFlidar()
 {
