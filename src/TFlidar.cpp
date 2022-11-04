@@ -93,15 +93,6 @@ namespace benewake{
         }
         total += ret;
       }
-
-#ifdef DEBUG
-      for(int i = 0; i < _nRead; i++)
-      {
-        printf("%02x ", _buf[i]);
-      }
-      printf("\n");
-#endif // DEBUG
-
       return true;
     }
 
