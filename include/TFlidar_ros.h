@@ -20,8 +20,6 @@ private:
   benewake::TFlidar *tflidar_obj;
   sensor_msgs::msg::Range TFlidar_range;
   double distance{0.0};
-  rclcpp::TimerBase::SharedPtr timer_;
-  void timerCallback();
   rclcpp::Publisher<sensor_msgs::msg::Range>::SharedPtr range_publisher_;
 };
 #endif
